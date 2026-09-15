@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.local
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+
+# Logs
+npm-debug.log*
+yarn-error.log*

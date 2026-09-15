@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Workbench</title>
+<link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+
+<header>
+  <h1>PDF Workbench</h1>
+  <p>Merge, reorder, split and convert &mdash; nothing leaves this computer.</p>
+  <span class="spacer"></span>
+  <span class="badge">Works offline</span>
+</header>
+
+<div class="toolbar">
+  <button id="addBtn">Add files</button>
+  <button id="undoBtn" disabled title="Undo (Ctrl+Z)">Undo</button>
+  <div class="divider"></div>
+  <button id="selectAllBtn" disabled>Select all</button>
+  <button id="clearSelBtn" disabled>Clear selection</button>
+  <div class="divider"></div>
+  <button id="rotateBtn" disabled>Rotate 90&deg;</button>
+  <button id="removeBtn" class="danger" disabled>Remove</button>
+  <div class="divider"></div>
+  <button id="convertBtn" disabled>Export as&hellip;</button>
+  <button id="exportBtn" class="primary" disabled>Export PDF</button>
+  <span class="tool-count" id="count"></span>
+</div>
+
+<div class="stage" id="stage">
+  <div class="dropzone" id="dropzone">
+    <h2>Drop PDFs or images here</h2>
+    <p>Every page becomes a tile you can drag into order, rotate or remove. Export as a merged PDF, as PNG/JPG/WebP images, or as plain text.</p>
+    <button class="primary" id="browseBtn">Choose files</button>
+  </div>
+  <div id="gridWrap" hidden>
+    <p class="hint">Drag tiles to reorder. Click a tile to select it &mdash; shift-click for a range. Ctrl+Z undoes the last change.</p>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<!-- export dialog -->
+<div class="scrim" id="scrim" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <h3 id="dlgTitle">Export</h3>
+    <div class="body">
+      <div class="field">
+        <label for="fmt">Format</label>
+        <select id="fmt">
+          <option value="pdf">PDF &mdash; one merged document</option>
+          <option value="png">PNG image &mdash; one file per page</option>
+          <option value="jpeg">JPG image &mdash; one file per page</option>
+          <option value="webp">WebP image &mdash; one file per page</option>
+          <option value="txt">Plain text &mdash; one .txt file</option>
+        </select>
+        <div class="note" id="fmtNote"></div>
+      </div>
+
+      <div class="field" id="scopeField">
+        <label for="scope">Pages</label>
+        <select id="scope">
+          <option value="all">All pages</option>
+          <option value="sel">Selected pages only</option>
+        </select>
+      </div>
+
+      <div class="field" id="dpiField" hidden>
+        <label for="dpi">Resolution</label>
+        <div class="rangerow">
+          <input type="range" id="dpi" min="72" max="300" step="24" value="150">
+          <output id="dpiOut">150 DPI</output>
+        </div>
+        <div class="note">72 for screen, 150 for general use, 300 for print. Higher settings take longer and produce much larger files.</div>
+      </div>
+
+      <div class="field" id="qualityField" hidden>
+        <label for="quality">Quality</label>
+        <div class="rangerow">
+          <input type="range" id="quality" min="40" max="100" step="5" value="88">
+          <output id="qualityOut">88%</output>
+        </div>
+      </div>
+    </div>
+    <div class="foot">
+      <button id="dlgCancel">Cancel</button>
+      <button id="dlgGo" class="primary">Export</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
+<div class="status" id="status" hidden></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

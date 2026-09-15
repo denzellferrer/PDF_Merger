@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug in Chrome (dev server)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "dev",
+      "sourceMaps": true
+    },
+    {
+      "name": "Open built file (no server)",
+      "type": "chrome",
+      "request": "launch",
+      "file": "${workspaceFolder}/dist/index.html",
+      "preLaunchTask": "build",
+      "runtimeArgs": ["--allow-file-access-from-files"]
+    }
+  ]
+}
