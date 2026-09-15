@@ -5,25 +5,72 @@ import {
   getLastClicked, setLastClicked, snapshot,
 } from './state.js';
 import { loadPdf } from './pdfjs.js';
+import { imageToBoxCanvas } from './exporters/canvas.js';
+import { saveSessionSoon } from './persist.js';
 import { escapeHtml, $ } from './utils.js';
 
 const THUMB_W = 220;
 const THUMB_H = 290;
 
+// Thumbnails are drawn at the screen's real pixel density so they are not soft
+// on a HiDPI display. Capped at 2, past which the memory each tile costs grows
+// faster than the sharpness anyone can see.
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+/**
+ * Rasterised thumbnails, keyed by page id and rotation.
+ *
+ * Without this, every re-render — including one caused by clicking a single
+ * tile — re-rasterised the whole grid. `inflight` holds the jobs that have not
+ * finished yet, so two renders in quick succession share one render pass
+ * rather than racing each other.
+ *
+ * @type {Map<string, HTMLCanvasElement>}
+ */
+const ready = new Map();
+/** @type {Map<string, Promise<HTMLCanvasElement>>} */
+const inflight = new Map();
+
+const thumbKey = (p) => p.id + ':' + p.rotation;
+
+/**
+ * Full rebuild of the grid. Use this for anything that changes which pages
+ * exist or what order they are in; for a selection change use `syncChrome`,
+ * which does not touch the tiles at all.
+ */
 export function render() {
   const pages = getPages();
   const has = pages.length > 0;
 
   $('dropzone').hidden = has;
   $('gridWrap').hidden = !has;
+  // The offer to restore a session only makes sense on an empty workbench.
+  if (has) $('restoreBar').hidden = true;
 
-  const grid = $('grid');
-  grid.innerHTML = '';
-  pages.forEach((p, idx) => grid.appendChild(tile(p, idx)));
+  $('grid').replaceChildren(...pages.map((p, idx) => tile(p, idx)));
 
+  pruneThumbs(pages);
+  syncChrome();
+  saveSessionSoon(pages);
+}
+
+/**
+ * Updates everything that depends on the selection — tile highlights, the page
+ * count and the toolbar — without rebuilding a single tile.
+ */
+export function syncChrome() {
+  const pages = getPages();
+  const has = pages.length > 0;
   const sel = selectedCount();
+
+  const byId = new Map(pages.map((p) => [p.id, p]));
+  for (const el of $('grid').children) {
+    const p = byId.get(Number(el.dataset.id));
+    if (p) el.classList.toggle('selected', p.selected);
+  }
+
   $('count').textContent = has
-    ? pages.length + ' page' + (pages.length > 1 ? 's' : '') + (sel ? ' \u00b7 ' + sel + ' selected' : '')
+    ? pages.length + ' page' + (pages.length > 1 ? 's' : '') + (sel ? ' · ' + sel + ' selected' : '')
     : '';
 
   $('exportBtn').disabled = !has;
@@ -35,6 +82,12 @@ export function render() {
   $('undoBtn').disabled = historyDepth() === 0;
 }
 
+/** Drops cached thumbnails for pages that are gone, and for stale rotations. */
+function pruneThumbs(pages) {
+  const live = new Set(pages.map(thumbKey));
+  for (const key of ready.keys()) if (!live.has(key)) ready.delete(key);
+}
+
 function tile(p, idx) {
   const el = document.createElement('div');
   el.className = 'page' + (p.selected ? ' selected' : '');
@@ -44,7 +97,6 @@ function tile(p, idx) {
 
   const thumb = document.createElement('div');
   thumb.className = 'thumb';
-  thumb.innerHTML = '<span class="loading">\u2026</span>';
   el.appendChild(thumb);
 
   el.appendChild(pageBar(p, idx));
@@ -52,7 +104,7 @@ function tile(p, idx) {
   el.onclick = (e) => selectOnClick(e, p);
   attachDragHandlers(el, p);
 
-  drawThumb(p, thumb);
+  showThumb(p, thumb);
   return el;
 }
 
@@ -66,7 +118,7 @@ function pageBar(p, idx) {
   const rot = document.createElement('button');
   rot.className = 'icon-btn';
   rot.title = 'Rotate this page';
-  rot.textContent = '\u21bb';
+  rot.textContent = '↻';
   rot.onclick = (e) => {
     e.stopPropagation();
     snapshot('rotate page');
@@ -77,7 +129,7 @@ function pageBar(p, idx) {
   const del = document.createElement('button');
   del.className = 'icon-btn remove';
   del.title = 'Remove this page';
-  del.textContent = '\u2715';
+  del.textContent = '✕';
   del.onclick = (e) => {
     e.stopPropagation();
     snapshot('remove page');
@@ -106,7 +158,8 @@ function selectOnClick(e, p) {
     p.selected = !p.selected;
     setLastClicked(p.id);
   }
-  render();
+  // Only the highlight and the toolbar change, so the tiles are left alone.
+  syncChrome();
 }
 
 function attachDragHandlers(el, p) {
@@ -139,34 +192,66 @@ function attachDragHandlers(el, p) {
   };
 }
 
-async function drawThumb(p, host) {
-  try {
-    if (p.type === 'image') {
-      const blob = new Blob([p.bytes], { type: p.mime });
-      const img = new Image();
-      img.src = URL.createObjectURL(blob);
-      img.onload = () => URL.revokeObjectURL(img.src);
-      img.style.transform = 'rotate(' + p.rotation + 'deg)';
-      host.innerHTML = '';
-      host.appendChild(img);
-      return;
-    }
+/** Puts a thumbnail in the tile, from cache when one has already been drawn. */
+function showThumb(p, host) {
+  const key = thumbKey(p);
 
-    const doc = await loadPdf(p.bytes);
-    const page = await doc.getPage(p.pageIndex + 1);
-
-    const base = page.getViewport({ scale: 1 });
-    const scale = Math.min(THUMB_W / base.width, THUMB_H / base.height);
-    const vp = page.getViewport({ scale, rotation: p.rotation });
-
-    const canvas = document.createElement('canvas');
-    canvas.width = vp.width;
-    canvas.height = vp.height;
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-
-    host.innerHTML = '';
-    host.appendChild(canvas);
-  } catch {
-    host.innerHTML = '<span class="loading">No preview</span>';
+  const cached = ready.get(key);
+  if (cached) {
+    // Re-appending moves the canvas out of the tile the last render built.
+    host.replaceChildren(cached);
+    return;
   }
+
+  host.innerHTML = '<span class="loading">…</span>';
+
+  let job = inflight.get(key);
+  if (!job) {
+    job = drawThumb(p).finally(() => inflight.delete(key));
+    inflight.set(key, job);
+  }
+
+  job.then((canvas) => {
+    ready.set(key, canvas);
+    // The grid may have been rebuilt while this was rendering, in which case a
+    // newer tile is already waiting on the same job and will take the canvas.
+    if (host.isConnected) host.replaceChildren(canvas);
+  }).catch(() => {
+    if (host.isConnected) host.innerHTML = '<span class="loading">No preview</span>';
+  });
+}
+
+/** Rasterises one page to a canvas sized to fit inside the tile. */
+async function drawThumb(p) {
+  if (p.type === 'image') {
+    return forDisplay(await imageToBoxCanvas(p, THUMB_W, THUMB_H, DPR));
+  }
+
+  const doc = await loadPdf(p.bytes);
+  const page = await doc.getPage(p.pageIndex + 1);
+
+  // pdf.js *replaces* the page's own rotation rather than adding to it, so the
+  // two are combined here — otherwise a source page that already carries a
+  // /Rotate would preview upright while exporting sideways.
+  const rotation = (page.rotate + p.rotation) % 360;
+
+  // Measured with the rotation applied, so a quarter-turned page is fitted by
+  // its turned dimensions instead of overflowing the tile.
+  const base = page.getViewport({ scale: 1, rotation });
+  const fit = Math.min(THUMB_W / base.width, THUMB_H / base.height);
+  const vp = page.getViewport({ scale: fit * DPR, rotation });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(vp.width);
+  canvas.height = Math.round(vp.height);
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+
+  return forDisplay(canvas);
+}
+
+/** Pins a canvas's CSS size to its pixel size divided by the pixel ratio. */
+function forDisplay(canvas) {
+  canvas.style.width = canvas.width / DPR + 'px';
+  canvas.style.height = canvas.height / DPR + 'px';
+  return canvas;
 }
