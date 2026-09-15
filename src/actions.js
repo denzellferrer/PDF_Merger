@@ -2,7 +2,7 @@
 
 import { getPages, setPages, getSelected, snapshot, restoreSnapshot } from './state.js';
 import { status } from './status.js';
-import { render } from './render.js';
+import { render, syncChrome } from './render.js';
 
 export function undo() {
   const label = restoreSnapshot();
@@ -13,12 +13,13 @@ export function undo() {
 
 export function selectAll() {
   getPages().forEach((p) => { p.selected = true; });
-  render();
+  // Selection does not change what any tile shows, so the grid is left as it is.
+  syncChrome();
 }
 
 export function clearSelection() {
   getPages().forEach((p) => { p.selected = false; });
-  render();
+  syncChrome();
 }
 
 export function rotateSelected() {

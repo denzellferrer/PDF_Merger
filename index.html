@@ -31,6 +31,15 @@
 </div>
 
 <div class="stage" id="stage">
+  <div class="restore-bar" id="restoreBar" hidden>
+    <div class="restore-text">
+      <strong id="restoreTitle">Unfinished session</strong>
+      <span id="restoreDetail"></span>
+    </div>
+    <button id="restoreBtn" class="primary">Restore</button>
+    <button id="discardBtn">Start fresh</button>
+  </div>
+
   <div class="dropzone" id="dropzone">
     <h2>Drop PDFs or images here</h2>
     <p>Every page becomes a tile you can drag into order, rotate or remove. Export as a merged PDF, as PNG/JPG/WebP images, or as plain text.</p>
