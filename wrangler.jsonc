@@ -1,0 +1,18 @@
+{
+  // Static-assets Worker: there is no server-side code, wrangler just uploads
+  // what `vite build` put in dist/. Without this file `wrangler deploy` has
+  // nothing to go on, falls back to probing vite.config.js, and fails there.
+  //
+  // `name` must match the Workers project this repo is connected to, or a
+  // deploy creates a second project instead of updating the existing one.
+  "name": "pdf-workbench",
+  "compatibility_date": "2026-09-15",
+
+  "assets": {
+    "directory": "./dist",
+
+    // The build inlines everything into one index.html, so every path should
+    // land on it rather than 404.
+    "not_found_handling": "single-page-application"
+  }
+}
