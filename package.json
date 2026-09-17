@@ -16,7 +16,8 @@
   },
   "devDependencies": {
     "vite": "^5.4.21",
-    "vite-plugin-singlefile": "^2.3.3"
+    "vite-plugin-singlefile": "^2.3.3",
+    "wrangler": "4.133.0"
   },
   "allowScripts": {
     "esbuild@0.21.5": true
