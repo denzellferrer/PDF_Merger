@@ -4,10 +4,10 @@
   // nothing to go on, falls back to probing vite.config.js, and fails there.
   //
   // `name` must match the Workers project this repo is connected to, or a
-  // deploy creates a second project instead of updating the existing one.
-  // Cloudflare derived this from the repo name (PDF_Merger), so it is
-  // "pdf-merger" and not the name of the tool itself — do not "tidy" it.
-  "name": "pdf-merger",
+  // deploy creates a second Worker instead of updating the existing one —
+  // builds then pass while the live site never changes. Whenever the Worker is
+  // renamed in the Cloudflare dashboard, this has to be changed to match.
+  "name": "merge-pdf",
   "compatibility_date": "2026-09-15",
 
   "assets": {
