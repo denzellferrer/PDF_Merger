@@ -19,8 +19,8 @@
 <header class="masthead">
   <h1>PDF Workbench</h1>
   <p class="lede">
-    Merge, reorder, rotate, split and convert PDFs and images. Every page is mounted as a
-    unit you can rerack, turn or pull. Nothing leaves this computer.
+    Merge, reorder, rotate, split and convert PDFs and images. Every page becomes a tile
+    you can drag into order, turn or remove. Nothing leaves this computer.
   </p>
   <div class="chips">
     <span class="chip"><span class="led led-green led-a"></span>Local only</span>
@@ -58,17 +58,15 @@
 
   <div class="dropzone" id="dropzone">
     <h2>Drop PDFs or images here</h2>
-    <p>Every page becomes a unit you can rerack, rotate or pull. Export as a merged PDF, as PNG/JPG/WebP images, or as plain text.</p>
+    <p>Every page becomes a tile you can drag into order, rotate or remove. Export as a merged PDF, as PNG/JPG/WebP images, or as plain text.</p>
     <button class="primary" id="browseBtn">Choose files</button>
   </div>
 
   <div id="gridWrap" hidden>
     <div class="rack-head">
-      <span>Rack A &middot; page order</span>
-      <span class="hint">Drag to rerack &middot; click to select &middot; shift-click for a range &middot; Ctrl+Z undoes</span>
+      <span class="hint">Drag to reorder &middot; click to select &middot; shift-click for a range &middot; Ctrl+Z undoes</span>
     </div>
     <div class="grid" id="grid"></div>
-    <div class="rack-foot" aria-hidden="true"></div>
   </div>
 </div>
 

@@ -95,14 +95,6 @@ function tile(p, idx) {
   el.dataset.id = p.id;
   el.tabIndex = 0;
 
-  // Mounting ears. Decorative only — they carry no state and no handlers, and
-  // sit outside the flex column so they do not affect layout.
-  el.insertAdjacentHTML(
-    'beforeend',
-    '<span class="ear left" aria-hidden="true"><span class="screw"></span><span class="screw"></span></span>' +
-    '<span class="ear right" aria-hidden="true"><span class="screw"></span><span class="screw"></span></span>',
-  );
-
   const thumb = document.createElement('div');
   thumb.className = 'thumb';
   el.appendChild(thumb);
@@ -119,14 +111,8 @@ function tile(p, idx) {
 function pageBar(p, idx) {
   const bar = document.createElement('div');
   bar.className = 'page-bar';
-  // Rack-unit numbering, per the site's design system. It is the page's
-  // position in the export order, which is the whole point of the grid, so the
-  // U-prefix labels something real rather than decorating the number.
-  const unit = 'U' + String(idx + 1).padStart(2, '0');
-
   bar.innerHTML =
-    '<span class="led unit-led" aria-hidden="true"></span>' +
-    '<span class="page-num">' + unit + '</span>' +
+    '<span class="page-num">' + (idx + 1) + '</span>' +
     '<span class="page-src" title="' + escapeHtml(p.srcName) + '">' + escapeHtml(p.srcName) + '</span>';
 
   const rot = document.createElement('button');

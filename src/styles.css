@@ -183,105 +183,67 @@ body.dragging .stage{background:#0e0819}
 /* ---- the rack ---- */
 
 #gridWrap{position:relative}
-/* Ambient purple glow behind the cabinet (z 0 in the site's scale). */
-#gridWrap::before{
-  content:'';position:absolute;inset:-50px -30px 30px;
-  background:radial-gradient(58% 46% at 50% 0%,rgba(181,66,255,.15),transparent 72%);
-  z-index:0;pointer-events:none;
-}
 .rack-head{
-  position:relative;z-index:1;
   display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--steel-dark);
-  padding-bottom:14px;
+  padding-bottom:16px;
 }
 .hint{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--steel-dark)}
 
 .grid{
-  position:relative;z-index:1;
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));
-  gap:20px 30px;
-}
-/* Under-rack LED strip. */
-.rack-foot{
-  position:relative;z-index:1;
-  margin-top:26px;height:2px;border-radius:2px;
-  background:linear-gradient(to right,transparent,var(--glow-primary),transparent);
-  opacity:.5;box-shadow:0 0 18px rgba(181,66,255,.5);
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));
+  gap:18px;
 }
 
-/* ---- one page, mounted as a rack unit ---- */
+/* ---- one page ----
+   The grid is the busiest part of the screen, so the tile carries no ornament:
+   the page image is the content and everything else recedes. The hardware
+   language stays on the singular chrome — the toolbar and the dialog — where
+   it reads as detail rather than repeating forty times. */
 
 .page{
   position:relative;
-  background:linear-gradient(to bottom,#221e2d 0%,var(--panel-dark) 12%,#151220 100%);
-  border:1px solid var(--frame);border-radius:3px;
-  display:flex;flex-direction:column;cursor:grab;
+  background:#16131f;
+  border:1px solid #272033;border-radius:3px;
+  display:flex;flex-direction:column;cursor:grab;overflow:hidden;
   transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
 }
-/* Steel top-edge highlight; lights up on hover and while selected. */
-.page::before{
-  content:'';position:absolute;left:6px;right:6px;top:2px;height:1.4px;
-  border-radius:1px;background:var(--steel-mid);opacity:.45;z-index:2;
-  transition:opacity .2s var(--ease),background .2s var(--ease);
-}
-.page:hover{border-color:var(--glow-deep)}
-.page:hover::before{background:var(--glow-primary);opacity:1}
+.page:hover{border-color:#453c5c}
 .page:focus-visible{outline:2px solid var(--glow-primary);outline-offset:2px}
 .page.selected{
   border-color:var(--glow-primary);
-  box-shadow:0 0 0 1px var(--glow-primary),0 0 20px rgba(181,66,255,.3);
+  box-shadow:0 0 0 1px var(--glow-primary);
 }
-.page.selected::before{background:var(--glow-primary);opacity:1}
 .page.drag-over{border-color:var(--steel-mid);border-style:dashed}
 .page.lifting{opacity:.35}
 
-/* Mounting ears, two screws each. Decorative only. */
-.ear{
-  position:absolute;top:14%;bottom:14%;width:11px;
-  background:linear-gradient(to right,#46414f,var(--frame),#302b3a);
-  border:1px solid #241f2c;border-radius:2px;
-  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-  padding:4px 0;
-}
-.ear.left{left:-12px}
-.ear.right{right:-12px}
-.screw{
-  width:6px;height:6px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,var(--steel-light),var(--steel-dark) 70%,#3d3947);
-  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.5);
-}
-
-/* Recessed well holding the page. A white document on the dark ground would
-   glare; set in a bezel it reads as a display panel instead. */
+/* A white page on the dark ground would glare, so it sits on an inset darker
+   panel — the one piece of depth worth keeping. */
 .thumb{
-  margin:10px 10px 0;
-  background:#0d0a14;border:1px solid #262034;border-radius:2px;
+  background:#0d0a14;
   aspect-ratio:1/1.3;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
-  padding:9px;
+  padding:12px;
 }
 .thumb canvas,.thumb img{
   max-width:100%;max-height:100%;object-fit:contain;
-  box-shadow:0 2px 10px rgba(0,0,0,.6);
+  box-shadow:0 1px 6px rgba(0,0,0,.5);
 }
 .thumb .loading{font-family:var(--font-mono);font-size:11px;color:var(--steel-dark)}
 
 .page-bar{
-  display:flex;align-items:center;gap:8px;padding:9px 10px;
-  border-top:1px solid #262034;margin-top:10px;
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border-top:1px solid #241e30;
 }
 .page-num{
-  font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;
-  color:var(--steel-mid);font-variant-numeric:tabular-nums;flex:none;
+  font-family:var(--font-mono);font-size:11px;
+  color:var(--steel-dark);font-variant-numeric:tabular-nums;flex:none;
+  min-width:16px;
 }
+.page.selected .page-num{color:var(--glow-primary)}
 .page-src{
   font-family:var(--font-mono);font-size:11px;color:var(--text-dim);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;
 }
-.unit-led{background:#2f2a3a;box-shadow:none}
-.page.selected .unit-led{background:var(--led-green);box-shadow:0 0 6px rgba(57,231,95,.85)}
 
 .icon-btn{
   border:none;background:transparent;padding:3px 5px;font-size:12px;line-height:1;
